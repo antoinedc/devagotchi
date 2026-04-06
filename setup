@@ -73,11 +73,33 @@ else
     echo "   ✅ Status bar installed!"
 fi
 
+# Install auto-feed hook (Stop event)
+echo "🍖 Setting up auto-feed..."
+AUTOFEED_CMD="node $SCRIPT_DIR/hooks/devagotchi-autofeed.js"
+
+if [ -f "$SETTINGS_FILE" ]; then
+    node -e "
+        const fs = require('fs');
+        const s = JSON.parse(fs.readFileSync('$SETTINGS_FILE', 'utf8'));
+        if (!s.hooks) s.hooks = {};
+        if (!s.hooks.Stop) s.hooks.Stop = [];
+        const hasIt = s.hooks.Stop.some(e => e.hooks && e.hooks.some(h => h.command && h.command.includes('devagotchi-autofeed')));
+        if (!hasIt) {
+            s.hooks.Stop.push({ hooks: [{ type: 'command', command: '$AUTOFEED_CMD', timeout: 15 }] });
+            fs.writeFileSync('$SETTINGS_FILE', JSON.stringify(s, null, 2));
+            console.log('   \x1b[32m✓\x1b[0m Auto-feed hook installed (runs on session end)');
+        } else {
+            console.log('   Auto-feed already configured.');
+        }
+    " 2>/dev/null || echo "   \u26a0\ufe0f  Could not install auto-feed hook"
+fi
+
 echo ""
 echo "✅ Devagotchi installed!"
 echo ""
 echo "   Run /devagotchi in Claude Code to hatch your pet."
-echo "   Your pet's mood shows in the status bar 🐾"
+echo "   Your pet feeds automatically when sessions end 🍖"
+echo "   Status bar shows your pet's mood 🐾"
 echo ""
 # Show a quick preview
 node dist/cli.js 2>/dev/null || true
