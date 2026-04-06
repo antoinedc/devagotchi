@@ -1,0 +1,25 @@
+{
+  "name": "devagotchi",
+  "version": "1.0.0",
+  "description": "A terminal-resident virtual pet fed by AI coding tool token consumption",
+  "main": "dist/index.js",
+  "bin": {
+    "devagotchi": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "node dist/cli.js"
+  },
+  "keywords": ["cli", "pet", "ai", "devtools"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3"
+  }
+}
