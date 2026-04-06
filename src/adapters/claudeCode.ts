@@ -20,22 +20,34 @@ export class ClaudeCodeAdapter {
         .map(dirent => path.join(CLAUDE_DIR, dirent.name));
 
       for (const projectDir of projectDirs) {
+        // Check for JSONL files directly in project dir (current Claude Code structure)
+        const files = fs.readdirSync(projectDir)
+          .filter(file => file.endsWith('.jsonl'));
+
+        for (const file of files) {
+          const filePath = path.join(projectDir, file);
+          const result = this.parseJsonlFile(filePath, lastTimestamp);
+          totalTokens += result.tokens;
+          maxTimestamp = Math.max(maxTimestamp, result.lastTimestamp);
+        }
+
+        // Also check sessions subdirectory (legacy/future structure)
         const sessionsDir = path.join(projectDir, 'sessions');
-        if (!fs.existsSync(sessionsDir)) continue;
+        if (fs.existsSync(sessionsDir)) {
+          const sessionDirs = fs.readdirSync(sessionsDir, { withFileTypes: true })
+            .filter(dirent => dirent.isDirectory())
+            .map(dirent => path.join(sessionsDir, dirent.name));
 
-        const sessionDirs = fs.readdirSync(sessionsDir, { withFileTypes: true })
-          .filter(dirent => dirent.isDirectory())
-          .map(dirent => path.join(sessionsDir, dirent.name));
+          for (const sessionDir of sessionDirs) {
+            const sessionFiles = fs.readdirSync(sessionDir)
+              .filter(file => file.endsWith('.jsonl'));
 
-        for (const sessionDir of sessionDirs) {
-          const files = fs.readdirSync(sessionDir)
-            .filter(file => file.endsWith('.jsonl'));
-
-          for (const file of files) {
-            const filePath = path.join(sessionDir, file);
-            const result = this.parseJsonlFile(filePath, lastTimestamp);
-            totalTokens += result.tokens;
-            maxTimestamp = Math.max(maxTimestamp, result.lastTimestamp);
+            for (const file of sessionFiles) {
+              const filePath = path.join(sessionDir, file);
+              const result = this.parseJsonlFile(filePath, lastTimestamp);
+              totalTokens += result.tokens;
+              maxTimestamp = Math.max(maxTimestamp, result.lastTimestamp);
+            }
           }
         }
       }
@@ -58,15 +70,21 @@ export class ClaudeCodeAdapter {
         try {
           const record = JSON.parse(line);
 
-          // Look for usage data in the record
-          if (record.usage) {
-            const timestamp = record.timestamp || Date.now();
+          // Look for assistant messages with usage data
+          if (record.type === 'assistant' && record.message?.usage) {
+            const timestampStr = record.timestamp;
+            const timestamp = timestampStr ? new Date(timestampStr).getTime() : Date.now();
 
             // Only count tokens after the last sync
             if (timestamp > lastTimestamp) {
-              const inputTokens = record.usage.input_tokens || 0;
-              const outputTokens = record.usage.output_tokens || 0;
-              tokens += inputTokens + outputTokens;
+              const usage = record.message.usage;
+              const inputTokens = usage.input_tokens || 0;
+              const outputTokens = usage.output_tokens || 0;
+              const cacheCreationTokens = usage.cache_creation_input_tokens || 0;
+              const cacheReadTokens = usage.cache_read_input_tokens || 0;
+
+              // Sum all token types
+              tokens += inputTokens + outputTokens + cacheCreationTokens + cacheReadTokens;
               maxTimestamp = Math.max(maxTimestamp, timestamp);
             }
           }
