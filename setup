@@ -1,0 +1,45 @@
+#!/bin/bash
+# Devagotchi Setup
+# Installs dependencies, builds, and verifies the skill
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
+echo "🐾 Setting up Devagotchi..."
+echo ""
+
+# Check Node.js
+if ! command -v node &> /dev/null; then
+    echo "❌ Node.js is required. Install it from https://nodejs.org/"
+    exit 1
+fi
+
+NODE_VERSION=$(node -v | sed 's/v//' | cut -d. -f1)
+if [ "$NODE_VERSION" -lt 18 ]; then
+    echo "❌ Node.js 18+ required (found v$NODE_VERSION)"
+    exit 1
+fi
+
+# Install deps
+echo "📦 Installing dependencies..."
+npm install --silent 2>/dev/null
+
+# Build
+echo "🔨 Building..."
+npm run build --silent 2>/dev/null
+
+# Verify
+if [ -f "dist/cli.js" ]; then
+    echo ""
+    echo "✅ Devagotchi installed!"
+    echo ""
+    echo "   Run /devagotchi in Claude Code to hatch your pet."
+    echo ""
+    # Show a quick preview
+    node dist/cli.js 2>/dev/null || true
+else
+    echo "❌ Build failed. Try running: npm install && npm run build"
+    exit 1
+fi

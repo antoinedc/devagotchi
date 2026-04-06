@@ -17,25 +17,23 @@ Devagotchi is your "Living Developer Companion" — a virtual pet that lives ins
 
 ## Installation
 
-### As a Claude Code Skill (Recommended)
+### One-liner (paste into Claude Code)
 
-1. Clone this repository to your Claude Code skills directory:
+```
+Install devagotchi: run git clone https://github.com/antoinedc/devagotchi.git ~/.claude/skills/devagotchi && cd ~/.claude/skills/devagotchi && ./setup
+```
+
+Paste the above into Claude Code. It clones, installs, builds, and hatches your pet.
+
+### Manual install
 
 ```bash
 git clone https://github.com/antoinedc/devagotchi.git ~/.claude/skills/devagotchi
-```
-
-2. Install dependencies and build:
-
-```bash
 cd ~/.claude/skills/devagotchi
-npm install
-npm run build
+./setup
 ```
 
-3. Restart Claude Code or reload skills
-
-4. Run `/devagotchi` in Claude Code to initialize your pet!
+Then type `/devagotchi` in Claude Code.
 
 ### Requirements
 
