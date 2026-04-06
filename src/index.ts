@@ -1,3 +1,6 @@
+import * as fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
 import { PetState } from './types';
 import { PetEngine } from './petEngine';
 import { Storage } from './storage';
@@ -55,6 +58,11 @@ export class Devagotchi {
 
     if (oldStage !== this.state.stage) {
       Display.showEvolution(oldStage, this.state.stage);
+      // Write level-up marker for statusline to detect
+      try {
+        const levelUpFile = path.join(os.homedir(), '.devagotchi', '.levelup');
+        fs.writeFileSync(levelUpFile, this.state.stage.toUpperCase());
+      } catch (e) {}
     }
 
     Display.showPet(this.state, 'eating');

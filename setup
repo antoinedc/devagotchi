@@ -30,16 +30,54 @@ npm install --silent 2>/dev/null
 echo "🔨 Building..."
 npm run build --silent 2>/dev/null
 
-# Verify
-if [ -f "dist/cli.js" ]; then
-    echo ""
-    echo "✅ Devagotchi installed!"
-    echo ""
-    echo "   Run /devagotchi in Claude Code to hatch your pet."
-    echo ""
-    # Show a quick preview
-    node dist/cli.js 2>/dev/null || true
-else
+# Verify build
+if [ ! -f "dist/cli.js" ]; then
     echo "❌ Build failed. Try running: npm install && npm run build"
     exit 1
 fi
+
+# Install statusline hook into Claude Code settings
+echo "📊 Setting up status bar..."
+SETTINGS_FILE="$HOME/.claude/settings.json"
+HOOK_CMD="node $SCRIPT_DIR/hooks/devagotchi-statusline.js"
+
+if [ -f "$SETTINGS_FILE" ]; then
+    # Check if statusLine is already configured
+    if node -e "
+        const s = JSON.parse(require('fs').readFileSync('$SETTINGS_FILE', 'utf8'));
+        if (s.statusLine && s.statusLine.command && s.statusLine.command.includes('devagotchi')) {
+            process.exit(0); // already installed
+        } else if (s.statusLine) {
+            process.exit(2); // another statusline exists
+        } else {
+            process.exit(1); // no statusline, install
+        }
+    " 2>/dev/null; then
+        echo "   Status bar already configured."
+    elif [ $? -eq 2 ]; then
+        echo "   ⚠️  Another status bar is configured. Skipping (add manually if you want)."
+        echo "   Add to ~/.claude/settings.json: \"statusLine\": {\"type\": \"command\", \"command\": \"$HOOK_CMD\"}"
+    else
+        # Install statusline
+        node -e "
+            const fs = require('fs');
+            const s = JSON.parse(fs.readFileSync('$SETTINGS_FILE', 'utf8'));
+            s.statusLine = { type: 'command', command: '$HOOK_CMD' };
+            fs.writeFileSync('$SETTINGS_FILE', JSON.stringify(s, null, 2));
+        " 2>/dev/null && echo "   ✅ Status bar installed!" || echo "   ⚠️  Could not update settings.json"
+    fi
+else
+    # Create settings with statusline
+    mkdir -p "$HOME/.claude"
+    echo "{\"statusLine\":{\"type\":\"command\",\"command\":\"$HOOK_CMD\"}}" > "$SETTINGS_FILE"
+    echo "   ✅ Status bar installed!"
+fi
+
+echo ""
+echo "✅ Devagotchi installed!"
+echo ""
+echo "   Run /devagotchi in Claude Code to hatch your pet."
+echo "   Your pet's mood shows in the status bar 🐾"
+echo ""
+# Show a quick preview
+node dist/cli.js 2>/dev/null || true
