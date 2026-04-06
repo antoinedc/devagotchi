@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Devagotchi</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #0a0a1a;
+    --card: #12122a;
+    --border: #2a2a4a;
+    --text: #e0e0f0;
+    --dim: #6a6a8a;
+    --green: #4ade80;
+    --yellow: #fbbf24;
+    --orange: #fb923c;
+    --red: #f87171;
+    --purple: #a78bfa;
+    --cyan: #22d3ee;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+  }
+
+  .container {
+    max-width: 480px;
+    width: 100%;
+  }
+
+  .pet-card {
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .pixel-frame {
+    background: #000;
+    border: 3px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin: 0 auto 1.5rem;
+    display: inline-block;
+    image-rendering: pixelated;
+    position: relative;
+  }
+
+  .pixel-frame canvas {
+    display: block;
+    image-rendering: pixelated;
+  }
+
+  .pet-name {
+    font-size: 14px;
+    color: var(--cyan);
+    margin-bottom: 0.25rem;
+  }
+
+  .pet-species {
+    font-size: 9px;
+    color: var(--dim);
+    margin-bottom: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .stat-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    font-size: 8px;
+  }
+
+  .stat-label {
+    color: var(--dim);
+    width: 70px;
+    text-align: left;
+  }
+
+  .stat-bar-bg {
+    flex: 1;
+    height: 12px;
+    background: #1a1a3a;
+    border-radius: 2px;
+    margin: 0 8px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .stat-bar-fill {
+    height: 100%;
+    border-radius: 1px;
+    transition: width 0.5s ease;
+  }
+
+  .stat-value {
+    width: 60px;
+    text-align: right;
+    font-size: 7px;
+  }
+
+  .mood-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 8px;
+    margin-top: 1rem;
+    border: 1px solid;
+  }
+
+  .mood-happy { background: #0a2a0a; border-color: var(--green); color: var(--green); }
+  .mood-content { background: #2a2a0a; border-color: var(--yellow); color: var(--yellow); }
+  .mood-hungry { background: #2a1a0a; border-color: var(--orange); color: var(--orange); }
+  .mood-starving { background: #2a0a0a; border-color: var(--red); color: var(--red); }
+
+  .stage-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 8px;
+    margin-top: 0.5rem;
+    background: #1a1a3a;
+    border: 1px solid var(--purple);
+    color: var(--purple);
+  }
+
+  .age {
+    font-size: 7px;
+    color: var(--dim);
+    margin-top: 1rem;
+  }
+
+  .no-pet {
+    font-size: 10px;
+    color: var(--dim);
+    padding: 3rem 1rem;
+  }
+
+  .instructions {
+    font-size: 7px;
+    color: var(--dim);
+    margin-top: 1.5rem;
+    line-height: 1.8;
+    text-align: center;
+  }
+
+  .breathing {
+    animation: breathe 3s ease-in-out infinite;
+  }
+
+  @keyframes breathe {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+  }
+
+  .sparkle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    animation: spark 2s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  @keyframes spark {
+    0%, 100% { opacity: 0; transform: scale(0); }
+    50% { opacity: 1; transform: scale(1); }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div class="pet-card" id="card">
+    <div class="no-pet" id="loading">Loading pet data...</div>
+  </div>
+  <div class="instructions">
+    Drag & drop your <code>~/.devagotchi/state.json</code> here to load<br>
+    or paste the JSON below
+  </div>
+</div>
+
+<script>
+// ─── Seeded RNG ───
+class Rng {
+  constructor(seed) { this.s = seed >>> 0; }
+  next() { this.s = (this.s * 1664525 + 1013904223) >>> 0; return this.s / 0x100000000; }
+  int(min, max) { return min + Math.floor(this.next() * (max - min)); }
+  pick(arr) { return arr[this.int(0, arr.length)]; }
+  bool(p = 0.5) { return this.next() < p; }
+  // Create a fork with a different seed offset (for level-dependent randomness)
+  fork(offset) { return new Rng(this.s ^ (offset * 2654435761)); }
+}
+
+function hashStr(s) {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = ((h << 5) - h + s.charCodeAt(i)) | 0;
+  return h >>> 0;
+}
+
+function hslToRgb(h, s, l) {
+  h /= 360; s /= 100; l /= 100;
+  let r, g, b;
+  if (s === 0) { r = g = b = l; }
+  else {
+    const f = (p, q, t) => { if (t < 0) t++; if (t > 1) t--; if (t < 1/6) return p+(q-p)*6*t; if (t < 1/2) return q; if (t < 2/3) return p+(q-p)*(2/3-t)*6; return p; };
+    const q = l < 0.5 ? l*(1+s) : l+s-l*s, p = 2*l-q;
+    r = f(p,q,h+1/3); g = f(p,q,h); b = f(p,q,h-1/3);
+  }
+  return [Math.round(r*255), Math.round(g*255), Math.round(b*255)];
+}
+
+function lerpColor(a, b, t) {
+  return [
+    Math.round(a[0] + (b[0]-a[0])*t),
+    Math.round(a[1] + (b[1]-a[1])*t),
+    Math.round(a[2] + (b[2]-a[2])*t),
+  ];
+}
+
+// ─── Continuous Evolution Level ───
+// Base 1.6 log scale with 300K base
+// Hatches ~2h, daily levels early, months for high tiers
+const LEVEL_BASE = 300000;
+const LEVEL_LOG = Math.log(1.6);
+
+function getLevel(xp) {
+  if (xp < LEVEL_BASE * 0.6) return 0; // ~180K to hatch
+  return Math.floor(Math.log(xp / LEVEL_BASE + 1) / LEVEL_LOG);
+}
+
+function getLevelTitle(level) {
+  if (level === 0) return 'Egg';
+  if (level <= 2) return 'Hatchling';
+  if (level <= 4) return 'Juvenile';
+  if (level <= 6) return 'Adult';
+  if (level <= 8) return 'Veteran';
+  if (level <= 10) return 'Elder';
+  if (level <= 13) return 'Mythic';
+  if (level <= 15) return 'Ascended';
+  if (level <= 17) return 'Cosmic';
+  if (level <= 20) return 'Eternal';
+  return 'Transcendent';
+}
+
+function getNextLevelXp(level) {
+  return Math.floor(LEVEL_BASE * (Math.pow(1.6, level + 1) - 1));
+}
+
+function getCurrentLevelXp(level) {
+  if (level === 0) return 0;
+  return Math.floor(LEVEL_BASE * (Math.pow(1.6, level) - 1));
+}
+
+// ─── Pixel Art Generator (Continuous Evolution) ───
+const SIZE = 16;
+const SCALE = 10;
+
+function generatePet(state) {
+  const seed = hashStr(state.name + state.species + state.bornAt);
+  const rng = new Rng(seed);
+  const level = getLevel(state.xp);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = SIZE * SCALE;
+  canvas.height = SIZE * SCALE;
+  const ctx = canvas.getContext('2d');
+  ctx.imageSmoothingEnabled = false;
+
+  const grid = Array.from({ length: SIZE }, () => Array(SIZE).fill(null));
+
+  // Base palette from seed — shifts hue as level increases
+  const baseHue = (rng.int(0, 360) + level * 7) % 360;
+  const satBoost = Math.min(level * 2, 20);
+  const palette = {
+    primary:   hslToRgb(baseHue, rng.int(50, 70) + satBoost, rng.int(45, 55)),
+    secondary: hslToRgb((baseHue + rng.int(20, 60)) % 360, rng.int(40, 60) + satBoost, rng.int(50, 60)),
+    accent:    hslToRgb((baseHue + rng.int(100, 200)) % 360, rng.int(60, 80) + satBoost, rng.int(55, 65)),
+    dark:      hslToRgb(baseHue, rng.int(30, 50), rng.int(18, 28)),
+    eye:       [255, 255, 255],
+    pupil:     hslToRgb((baseHue + 180) % 360, 80, 40),
+    glow:      hslToRgb((baseHue + rng.int(60, 120)) % 360, 90, 70),
+  };
+
+  // Level 0 = egg
+  if (level === 0) {
+    drawEgg(grid, rng, palette);
+  } else {
+    drawCreature(grid, rng, palette, state.species, level);
+  }
+
+  // Render grid to canvas
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      if (grid[y][x]) {
+        const [r, g, b] = grid[y][x];
+        ctx.fillStyle = `rgb(${r},${g},${b})`;
+        ctx.fillRect(x * SCALE, y * SCALE, SCALE, SCALE);
+      }
+    }
+  }
+
+  return { canvas, level };
+}
+
+function drawEgg(grid, rng, pal) {
+  const tmpl = [
+    '......XXXX......',
+    '....XXXXXXXX....',
+    '...XXXXXXXXXX...',
+    '..XXXXXXXXXXXX..',
+    '..XXXXXXXXXXXX..',
+    '.XXXXXXXXXXXXXX.',
+    '.XXXXXXXXXXXXXX.',
+    '.XXXXXXXXXXXXXX.',
+    '.XXXXXXXXXXXXXX.',
+    '.XXXXXXXXXXXXXX.',
+    '.XXXXXXXXXXXXXX.',
+    '..XXXXXXXXXXXX..',
+    '..XXXXXXXXXXXX..',
+    '...XXXXXXXXXX...',
+    '....XXXXXXXX....',
+    '......XXXX......',
+  ];
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < SIZE; x++) {
+      if (tmpl[y][x] === 'X') {
+        grid[y][x] = [...pal.primary];
+        if (y >= 4 && y <= 6) grid[y][x] = [...pal.secondary];
+        if (y >= 9 && y <= 10) grid[y][x] = [...pal.accent];
+        if (rng.bool(0.12)) grid[y][x] = [...pal.dark];
+      }
+    }
+  }
+  grid[3][6] = [255, 255, 255];
+  grid[4][5] = [220, 220, 255];
+}
+
+function drawCreature(grid, rng, pal, species, level) {
+  const half = Math.ceil(SIZE / 2);
+
+  // Base body params per species
+  let bodyWidth, bodyTop, bodyBottom, headTop, headWidth;
+  if (species === 'cat') {
+    headTop = 2; headWidth = 5; bodyTop = 6; bodyBottom = 12; bodyWidth = 4;
+  } else if (species === 'dragon') {
+    headTop = 1; headWidth = 5; bodyTop = 5; bodyBottom = 12; bodyWidth = 5;
+  } else { // robot
+    headTop = 2; headWidth = 6; bodyTop = 6; bodyBottom = 12; bodyWidth = 5;
+  }
+
+  // ─── Draw body (symmetric) ───
+  for (let y = 0; y < SIZE; y++) {
+    for (let x = 0; x < half; x++) {
+      let color = null;
+      if (y >= headTop && y < bodyTop) {
+        const maxW = Math.min(headWidth, headWidth - Math.abs((y - headTop) - 1));
+        if (x >= (half - maxW) && x < half) color = [...pal.primary];
+      }
+      if (y >= bodyTop && y <= bodyBottom) {
+        const bodyMid = (bodyBottom - bodyTop) / 2;
+        const dist = Math.abs((y - bodyTop) - bodyMid) / bodyMid;
+        const w = Math.round(bodyWidth * (1 - dist * 0.3));
+        if (x >= (half - w) && x < half) color = [...pal.primary];
+      }
+      if (color && x >= half - 2 && y >= bodyTop + 1 && y <= bodyBottom - 1) {
+        color = [...pal.secondary];
+      }
+      if (color) {
+        grid[y][x] = color;
+        grid[y][SIZE - 1 - x] = color;
+      }
+    }
+  }
+
+  // ─── Eyes ───
+  const eyeY = headTop + 2;
+  const eyeX1 = half - 3, eyeX2 = SIZE - 1 - eyeX1;
+  grid[eyeY][eyeX1] = [...pal.eye];
+  grid[eyeY][eyeX2] = [...pal.eye];
+  grid[eyeY][eyeX1] = [...pal.pupil]; // pupil on top for small grid
+  grid[eyeY][eyeX2] = [...pal.pupil];
+  // Level 4+: glowing eyes
+  if (level >= 4) {
+    grid[eyeY][eyeX1] = [...pal.glow];
+    grid[eyeY][eyeX2] = [...pal.glow];
+  }
+
+  // ─── Species base features (always present from level 1) ───
+  if (species === 'cat') {
+    // Ears
+    if (headTop - 1 >= 0) {
+      grid[headTop - 1][half - 4] = [...pal.primary];
+      grid[headTop - 1][SIZE - 1 - (half - 4)] = [...pal.primary];
+      grid[headTop][half - 4] = [...pal.primary];
+      grid[headTop][SIZE - 1 - (half - 4)] = [...pal.primary];
+    }
+  }
+  if (species === 'dragon') {
+    // Basic horns
+    if (headTop - 1 >= 0) {
+      grid[headTop - 1][half - 3] = [...pal.accent];
+      grid[headTop - 1][SIZE - 1 - (half - 3)] = [...pal.accent];
+    }
+  }
+  if (species === 'robot') {
+    // Antenna
+    if (headTop - 1 >= 0) {
+      grid[headTop - 1][half] = [...pal.accent];
+    }
+  }
+
+  // ─── Legs ───
+  const legY = bodyBottom + 1;
+  if (legY < SIZE) {
+    grid[legY][half - 2] = [...pal.dark];
+    grid[legY][SIZE - 1 - (half - 2)] = [...pal.dark];
+    if (legY + 1 < SIZE) {
+      grid[legY + 1][half - 2] = [...pal.dark];
+      grid[legY + 1][SIZE - 1 - (half - 2)] = [...pal.dark];
+    }
+  }
+
+  // ═══════════════════════════════════════
+  // LEVEL-BASED FEATURES (cumulative!)
+  // Each level unlocks a new visual trait
+  // ═══════════════════════════════════════
+
+  const lr = rng.fork(level); // level-dependent randomness
+
+  // Level 2+: Markings (spots or stripes)
+  if (level >= 2) {
+    const markType = rng.int(0, 3);
+    if (markType === 1) {
+      for (let i = 0; i < 3 + Math.min(level, 6); i++) {
+        const sy = lr.int(bodyTop + 1, bodyBottom);
+        const sx = lr.int(half - bodyWidth + 1, half);
+        if (grid[sy][sx]) { grid[sy][sx] = [...pal.accent]; grid[sy][SIZE-1-sx] = [...pal.accent]; }
+      }
+    } else if (markType === 2) {
+      for (let sy = bodyTop + 1; sy <= bodyBottom; sy += 2) {
+        for (let sx = half - bodyWidth + 1; sx < half; sx++) {
+          if (grid[sy][sx] && lr.bool(0.4)) { grid[sy][sx] = [...pal.dark]; grid[sy][SIZE-1-sx] = [...pal.dark]; }
+        }
+      }
+    }
+  }
+
+  // Level 3+: Species secondary features
+  if (level >= 3) {
+    if (species === 'cat') {
+      // Whiskers
+      const wy = eyeY + 2;
+      if (wy < SIZE) { grid[wy][half - 5] = [...pal.dark]; grid[wy][SIZE-1-(half-5)] = [...pal.dark]; }
+      // Tail
+      grid[bodyBottom][half + 2] = [...pal.primary];
+      if (bodyBottom + 1 < SIZE) grid[bodyBottom + 1][half + 3] = [...pal.primary];
+    }
+    if (species === 'dragon') {
+      // Taller horns
+      if (headTop - 2 >= 0) {
+        grid[headTop - 2][half - 3] = [...pal.accent];
+        grid[headTop - 2][SIZE - 1 - (half - 3)] = [...pal.accent];
+      }
+    }
+    if (species === 'robot') {
+      // Antenna extension + screen
+      if (headTop - 2 >= 0) { grid[headTop - 2][half] = [...pal.glow]; }
+      for (let sy = bodyTop + 1; sy <= bodyTop + 2 && sy < SIZE; sy++) {
+        for (let sx = half - 1; sx <= half; sx++) { grid[sy][sx] = [...pal.accent]; }
+      }
+    }
+  }
+
+  // Level 5+: Wings / Ear tufts / Shoulder pads
+  if (level >= 5) {
+    if (species === 'dragon') {
+      for (let wy = bodyTop; wy < bodyTop + 2 + Math.min(Math.floor(level/3), 4); wy++) {
+        if (wy < SIZE) {
+          grid[wy][1] = [...pal.accent]; grid[wy][SIZE - 2] = [...pal.accent];
+          if (wy === bodyTop) { grid[wy][0] = [...pal.accent]; grid[wy][SIZE - 1] = [...pal.accent]; }
+        }
+      }
+    }
+    if (species === 'cat') {
+      // Ear tufts
+      if (headTop - 2 >= 0) {
+        grid[headTop - 2][half - 4] = [...pal.accent];
+        grid[headTop - 2][SIZE - 1 - (half - 4)] = [...pal.accent];
+      }
+    }
+    if (species === 'robot') {
+      // Shoulder bolts
+      grid[bodyTop][half - bodyWidth + 1] = [...pal.glow];
+      grid[bodyTop][SIZE - 1 - (half - bodyWidth + 1)] = [...pal.glow];
+      // Larger screen
+      for (let sy = bodyTop + 1; sy <= bodyTop + 3 && sy < SIZE; sy++) {
+        for (let sx = half - 2; sx <= half + 1 && sx < SIZE; sx++) { grid[sy][sx] = [...pal.accent]; }
+      }
+    }
+  }
+
+  // Level 7+: Crown / Halo
+  if (level >= 7) {
+    const crownY = Math.max(0, headTop - 1);
+    const crownColor = level >= 12 ? pal.glow : pal.accent;
+    for (let cx = half - 2; cx <= half + 1; cx++) {
+      if (!grid[crownY][cx]) grid[crownY][cx] = [...crownColor];
+    }
+    // Crown points
+    if (crownY - 1 >= 0 && level >= 9) {
+      grid[crownY - 1][half - 1] = [...crownColor];
+      grid[crownY - 1][half] = [...crownColor];
+    }
+  }
+
+  // Level 8+: Tail features
+  if (level >= 8) {
+    if (species === 'dragon') {
+      if (bodyBottom + 1 < SIZE) { grid[bodyBottom + 1][half] = [...pal.accent]; grid[bodyBottom + 1][half-1] = [...pal.primary]; }
+      if (bodyBottom + 2 < SIZE) grid[bodyBottom + 2][half] = [...pal.glow];
+    }
+    if (species === 'cat') {
+      if (bodyBottom + 2 < SIZE) grid[bodyBottom + 2][half + 3] = [...pal.glow];
+    }
+  }
+
+  // Level 10+: Inner glow (aura, density increases with level)
+  if (level >= 10) {
+    const auraChance = Math.min(0.15 + (level - 10) * 0.03, 0.5);
+    const auraRng = rng.fork(level + 999);
+    for (let y = 0; y < SIZE; y++) {
+      for (let x = 0; x < SIZE; x++) {
+        if (!grid[y][x]) {
+          let adj = false;
+          for (const [dy, dx] of [[-1,0],[1,0],[0,-1],[0,1]]) {
+            const ny = y + dy, nx = x + dx;
+            if (ny >= 0 && ny < SIZE && nx >= 0 && nx < SIZE && grid[ny][nx]) { adj = true; break; }
+          }
+          if (adj && auraRng.bool(auraChance)) {
+            grid[y][x] = [...pal.glow];
+          }
+        }
+      }
+    }
+  }
+
+  // Level 13+: Outer aura (2-pixel radius)
+  if (level >= 13) {
+    const outerRng = rng.fork(level + 7777);
+    const outerChance = Math.min(0.1 + (level - 13) * 0.02, 0.35);
+    for (let y = 0; y < SIZE; y++) {
+      for (let x = 0; x < SIZE; x++) {
+        if (!grid[y][x]) {
+          let near = false;
+          for (let dy = -2; dy <= 2; dy++) {
+            for (let dx = -2; dx <= 2; dx++) {
+              if (Math.abs(dy) + Math.abs(dx) > 2) continue;
+              const ny = y + dy, nx = x + dx;
+              if (ny >= 0 && ny < SIZE && nx >= 0 && nx < SIZE && grid[ny][nx]) { near = true; break; }
+            }
+            if (near) break;
+          }
+          if (near && outerRng.bool(outerChance)) {
+            const dimGlow = lerpColor(pal.glow, [0,0,0], 0.5);
+            grid[y][x] = dimGlow;
+          }
+        }
+      }
+    }
+  }
+
+  // Level 16+: Color shift on body — secondary colors bleed in
+  if (level >= 16) {
+    const shiftRng = rng.fork(level + 31337);
+    for (let y = 0; y < SIZE; y++) {
+      for (let x = 0; x < SIZE; x++) {
+        if (grid[y][x] && arrEq(grid[y][x], pal.primary) && shiftRng.bool(0.15)) {
+          grid[y][x] = lerpColor(pal.primary, pal.glow, 0.3 + shiftRng.next() * 0.3);
+        }
+      }
+    }
+  }
+
+  // Level 20+: Eye trails (glowing pixels below eyes)
+  if (level >= 20) {
+    for (let trail = 1; trail <= Math.min(Math.floor((level - 18) / 2), 3); trail++) {
+      const ty = eyeY + trail;
+      if (ty < SIZE && !grid[ty][eyeX1]) grid[ty][eyeX1] = lerpColor(pal.glow, [0,0,0], trail * 0.25);
+      if (ty < SIZE && !grid[ty][eyeX2]) grid[ty][eyeX2] = lerpColor(pal.glow, [0,0,0], trail * 0.25);
+    }
+  }
+}
+
+function arrEq(a, b) { return a[0]===b[0] && a[1]===b[1] && a[2]===b[2]; }
+
+// ─── Dashboard Renderer ───
+
+function getMood(hunger) {
+  if (hunger > 70) return 'happy';
+  if (hunger > 40) return 'content';
+  if (hunger > 20) return 'hungry';
+  return 'starving';
+}
+
+function getHunger(state) {
+  const hours = (Date.now() - (state.lastUpdated || Date.now())) / (1000 * 60 * 60);
+  return Math.max(0, Math.min(100, state.hunger - Math.floor(hours)));
+}
+
+function formatXp(xp) {
+  if (xp >= 1e9) return (xp / 1e9).toFixed(1) + 'B';
+  if (xp >= 1e6) return (xp / 1e6).toFixed(1) + 'M';
+  if (xp >= 1e3) return (xp / 1e3).toFixed(1) + 'K';
+  return String(xp);
+}
+
+function barColor(pct) {
+  if (pct > 70) return 'var(--green)';
+  if (pct > 40) return 'var(--yellow)';
+  if (pct > 20) return 'var(--orange)';
+  return 'var(--red)';
+}
+
+function render(state) {
+  const card = document.getElementById('card');
+  const hunger = getHunger(state);
+  const mood = getMood(hunger);
+  const level = getLevel(state.xp);
+  const title = getLevelTitle(level);
+  const currentXp = getCurrentLevelXp(level);
+  const nextXp = getNextLevelXp(level);
+  const xpPct = level === 0 && state.xp === 0 ? 0
+    : Math.min(100, ((state.xp - currentXp) / (nextXp - currentXp)) * 100);
+  const ageDays = Math.floor((Date.now() - state.bornAt) / (1000 * 60 * 60 * 24));
+
+  // Generate pixel art
+  const { canvas, level: lvl } = generatePet(state);
+  canvas.classList.add('breathing');
+
+  const moodEmoji = { happy: '😊', content: '😌', hungry: '😟', starving: '😭' }[mood];
+
+  card.innerHTML = `
+    <div class="pixel-frame" id="pixelFrame"></div>
+    <div class="pet-name">${state.name}</div>
+    <div class="pet-species">${state.species} · lvl ${level}</div>
+
+    <div class="stat-row">
+      <span class="stat-label">HUNGER</span>
+      <div class="stat-bar-bg">
+        <div class="stat-bar-fill" style="width:${hunger}%; background:${barColor(hunger)}"></div>
+      </div>
+      <span class="stat-value">${Math.round(hunger)}%</span>
+    </div>
+
+    <div class="stat-row">
+      <span class="stat-label">XP</span>
+      <div class="stat-bar-bg">
+        <div class="stat-bar-fill" style="width:${xpPct}%; background:var(--purple)"></div>
+      </div>
+      <span class="stat-value">${formatXp(state.xp)}</span>
+    </div>
+
+    <div>
+      <span class="stage-badge">${title.toUpperCase()}</span>
+      <span class="mood-badge mood-${mood}">${moodEmoji} ${mood}</span>
+    </div>
+
+    <div class="age">${ageDays} day${ageDays !== 1 ? 's' : ''} old · next lvl: ${formatXp(nextXp)} xp</div>
+  `;
+
+  document.getElementById('pixelFrame').appendChild(canvas);
+
+  // Add sparkles for high levels
+  if (level >= 10) {
+    const frame = document.getElementById('pixelFrame');
+    const count = Math.min(3 + Math.floor((level - 10) / 2), 12);
+    for (let i = 0; i < count; i++) {
+      const spark = document.createElement('div');
+      spark.className = 'sparkle';
+      spark.style.left = Math.random() * 100 + '%';
+      spark.style.top = Math.random() * 100 + '%';
+      spark.style.animationDelay = (Math.random() * 2) + 's';
+      frame.appendChild(spark);
+    }
+  }
+}
+
+// ─── Load State ───
+
+// Try to load from query param or default path
+function tryLoad() {
+  // Check if state was passed as base64 query param
+  const params = new URLSearchParams(location.search);
+  const b64 = params.get('state');
+  if (b64) {
+    try {
+      const state = JSON.parse(atob(b64));
+      render(state);
+      return;
+    } catch (e) {}
+  }
+
+  // Check for state in hash
+  if (location.hash.length > 1) {
+    try {
+      const state = JSON.parse(decodeURIComponent(location.hash.slice(1)));
+      render(state);
+      return;
+    } catch(e) {}
+  }
+
+  // Show drop zone message
+  document.getElementById('loading').textContent = '🥚 Drop state.json here or run: /devagotchi dashboard';
+}
+
+tryLoad();
+
+// Drag and drop support
+document.addEventListener('dragover', e => { e.preventDefault(); });
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const state = JSON.parse(reader.result);
+      render(state);
+    } catch(e) {
+      alert('Invalid state.json');
+    }
+  };
+  reader.readAsText(file);
+});
+
+// Also accept paste
+document.addEventListener('paste', e => {
+  const text = e.clipboardData.getData('text');
+  try {
+    const state = JSON.parse(text);
+    render(state);
+  } catch(e) {}
+});
+</script>
+</body>
+</html>

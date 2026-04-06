@@ -8,6 +8,7 @@ import { nameCommand } from './commands/name';
 import { fortuneCommand } from './commands/fortune';
 import { trickCommand } from './commands/trick';
 import { resetCommand } from './commands/reset';
+import { dashboardCommand } from './commands/dashboard';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -46,6 +47,10 @@ async function main() {
 
       case 'reset':
         await resetCommand();
+        break;
+
+      case 'dashboard':
+        await dashboardCommand();
         break;
 
       default:
