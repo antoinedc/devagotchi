@@ -36,6 +36,21 @@ export class Display {
 
     const age = Math.floor((Date.now() - state.bornAt) / (1000 * 60 * 60 * 24));
     console.log(chalk.gray('Age:       ') + chalk.white(age) + ' days');
+
+    if (state.personality) {
+      const p = state.personality;
+      console.log('');
+      console.log(chalk.bold.cyan('🧬 Personality') + '\n');
+      console.log(chalk.gray('Chronotype: ') + chalk.white(p.chronotype) + chalk.gray(` (peak hour: ${p.peakHour}:00)`));
+      console.log(chalk.gray('Style:      ') + chalk.white(p.sessionStyle) + chalk.gray(` (avg ${p.avgSessionMin}min sessions)`));
+      console.log(chalk.gray('Rhythm:     ') + chalk.white(p.rhythm) + chalk.gray(` (${p.sessionsPerWeek} sessions/week)`));
+      console.log(chalk.gray('Schedule:   ') + chalk.white(p.schedule) + chalk.gray(` (${Math.round(p.weekdayRatio * 100)}% weekday)`));
+      console.log(chalk.gray('Intensity:  ') + chalk.white(p.intensity) + chalk.gray(` (avg ${Math.round(p.avgTokensPerSession / 1000)}K tokens/session)`));
+      console.log(chalk.gray('Pattern:    ') + chalk.white(p.pattern));
+      console.log('');
+      console.log(chalk.italic.yellow(`"${p.blurb}"`));
+    }
+
     console.log('');
   }
 

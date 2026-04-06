@@ -8,6 +8,7 @@ import { ClaudeCodeAdapter } from './adapters/claudeCode';
 import { Display } from './display';
 import { AsciiRenderer } from './ascii';
 import { Skills } from './skills';
+import { analyzeSessions } from './personality';
 
 export class Devagotchi {
   private state: PetState;
@@ -66,6 +67,16 @@ export class Devagotchi {
     }
 
     Display.showPet(this.state, 'eating');
+
+    // Re-analyze personality periodically (at most once per hour)
+    const ONE_HOUR = 60 * 60 * 1000;
+    if (!this.state.personality || Date.now() - this.state.personality.analyzedAt > ONE_HOUR) {
+      const traits = analyzeSessions(this.state.installedAt);
+      if (traits) {
+        this.state.personality = traits;
+      }
+    }
+
     this.save();
   }
 

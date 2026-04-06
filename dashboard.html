@@ -144,6 +144,39 @@
     margin-top: 1rem;
   }
 
+  .personality {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+    text-align: left;
+  }
+
+  .personality h3 {
+    font-size: 9px;
+    color: var(--cyan);
+    margin-bottom: 0.75rem;
+    text-align: center;
+  }
+
+  .trait-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 7px;
+    margin-bottom: 0.4rem;
+  }
+
+  .trait-label { color: var(--dim); }
+  .trait-value { color: var(--text); }
+
+  .blurb {
+    font-size: 7px;
+    color: var(--yellow);
+    font-style: italic;
+    text-align: center;
+    margin-top: 0.75rem;
+    line-height: 1.6;
+  }
+
   .no-pet {
     font-size: 10px;
     color: var(--dim);
@@ -682,6 +715,18 @@ function render(state) {
     </div>
 
     <div class="age">${ageDays} day${ageDays !== 1 ? 's' : ''} old · next lvl: ${formatXp(nextXp)} xp</div>
+
+    ${state.personality ? `
+    <div class="personality">
+      <h3>PERSONALITY</h3>
+      <div class="trait-row"><span class="trait-label">CHRONOTYPE</span><span class="trait-value">${state.personality.chronotype}</span></div>
+      <div class="trait-row"><span class="trait-label">STYLE</span><span class="trait-value">${state.personality.sessionStyle} (${state.personality.avgSessionMin}min avg)</span></div>
+      <div class="trait-row"><span class="trait-label">RHYTHM</span><span class="trait-value">${state.personality.rhythm} (${state.personality.sessionsPerWeek}/wk)</span></div>
+      <div class="trait-row"><span class="trait-label">INTENSITY</span><span class="trait-value">${state.personality.intensity}</span></div>
+      <div class="trait-row"><span class="trait-label">PATTERN</span><span class="trait-value">${state.personality.pattern}</span></div>
+      <div class="blurb">"${state.personality.blurb}"</div>
+    </div>
+    ` : ''}
   `;
 
   document.getElementById('pixelFrame').appendChild(canvas);
