@@ -1,43 +1,51 @@
 ---
 name: devagotchi
-description: Your living developer companion — a virtual pet that feeds on your AI coding sessions. Use /devagotchi to interact with your pet.
+description: Your living developer companion — a virtual pet that feeds on your AI coding sessions. Invoke with /devagotchi to see your pet, or /devagotchi <command> for specific actions.
+disable-model-invocation: true
+allowed-tools: Bash(node:*) Bash(bash:*)
 ---
 
-# Devagotchi - Your AI Coding Companion
+# Devagotchi 🐾
 
-Devagotchi is a virtual pet that lives in Claude Code. It feeds on the tokens consumed during your coding sessions and evolves as you work.
+A virtual pet that lives in Claude Code and evolves based on your token consumption.
+
+## Usage
+
+When the user invokes `/devagotchi`, run the appropriate script based on `$ARGUMENTS`:
+
+| $ARGUMENTS | Command |
+|---|---|
+| _(empty)_ | `bash ${CLAUDE_SKILL_DIR}/scripts/show.sh` |
+| `show` | `bash ${CLAUDE_SKILL_DIR}/scripts/show.sh` |
+| `feed` | `bash ${CLAUDE_SKILL_DIR}/scripts/feed.sh` |
+| `stats` | `bash ${CLAUDE_SKILL_DIR}/scripts/stats.sh` |
+| `pet` | `bash ${CLAUDE_SKILL_DIR}/scripts/pet.sh` |
+| `name <name>` | `bash ${CLAUDE_SKILL_DIR}/scripts/name.sh <name>` |
+| `fortune` | `bash ${CLAUDE_SKILL_DIR}/scripts/fortune.sh` |
+| `trick` | `bash ${CLAUDE_SKILL_DIR}/scripts/trick.sh` |
+| `reset` | `bash ${CLAUDE_SKILL_DIR}/scripts/reset.sh` |
+
+**Always display the raw terminal output exactly as printed** — the ASCII art must be preserved.
+
+## First Run
+
+On first invocation, the pet hatches as a random species (cat, dragon, or robot) starting from Egg with 0 XP. Only tokens consumed AFTER installation count toward feeding.
+
+## Setup
+
+If `${CLAUDE_SKILL_DIR}/dist/cli.js` doesn't exist, run setup first:
+
+```bash
+cd ${CLAUDE_SKILL_DIR} && npm install && npm run build
+```
 
 ## Commands
 
-All commands are run via `/devagotchi <command>`. When the user types `/devagotchi` with a subcommand, run the corresponding shell script.
-
-| User types | Run this |
-|---|---|
-| `/devagotchi` | `bash scripts/show.sh` |
-| `/devagotchi show` | `bash scripts/show.sh` |
-| `/devagotchi feed` | `bash scripts/feed.sh` |
-| `/devagotchi stats` | `bash scripts/stats.sh` |
-| `/devagotchi pet` | `bash scripts/pet.sh` |
-| `/devagotchi name Sparkles` | `bash scripts/name.sh Sparkles` |
-| `/devagotchi fortune` | `bash scripts/fortune.sh` |
-| `/devagotchi trick` | `bash scripts/trick.sh` |
-| `/devagotchi reset` | `bash scripts/reset.sh` |
-
-**Always display the raw terminal output from the script to the user.** Do not summarize or reformat it — the ASCII art must be shown exactly as printed.
-
-## What each command does
-
-- **show** — Display pet ASCII art with stats, hunger bar, XP progress
-- **feed** — Sync tokens from Claude Code sessions (since install) and feed pet
-- **stats** — Detailed stats: XP, hunger, mood, evolution progress, age
-- **pet** — Show love to your companion (heart animation)
-- **name <name>** — Rename your pet
-- **fortune** — Get a coding fortune
-- **trick** — Pet performs an ASCII trick
-- **reset** — Start over with a new pet (deletes all progress)
-
-## Notes
-
-- Pet only counts tokens from sessions AFTER installation (no retroactive XP)
-- Hunger depletes over time — feed regularly by coding with Claude Code
-- Pet evolves: Egg → Baby → Teen → Adult → Elder → Mythic
+- **show** — Pet ASCII art with stats, hunger bar, XP
+- **feed** — Sync tokens from Claude Code sessions and feed pet
+- **stats** — XP, hunger, mood, evolution progress, age
+- **pet** — Show love (heart animation)
+- **name `<name>`** — Rename your pet
+- **fortune** — Coding fortune from your pet
+- **trick** — ASCII trick animation
+- **reset** — Delete progress, hatch a new pet
