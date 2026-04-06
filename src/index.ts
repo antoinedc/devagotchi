@@ -38,7 +38,8 @@ export class Devagotchi {
     Display.showMessage('🍖 Syncing with Claude Code...', 'info');
 
     const result = await ClaudeCodeAdapter.getTokensSinceTimestamp(
-      this.state.lastSyncedTokenTimestamp
+      this.state.lastSyncedTokenTimestamp,
+      this.state.installedAt
     );
 
     if (result.tokens === 0) {

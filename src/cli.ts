@@ -1,45 +1,46 @@
 #!/usr/bin/env node
 
-import { Devagotchi } from './index';
+import { showCommand } from './commands/show';
+import { feedCommand } from './commands/feed';
+import { statsCommand } from './commands/stats';
+import { petCommand } from './commands/pet';
+import { nameCommand } from './commands/name';
+import { fortuneCommand } from './commands/fortune';
+import { trickCommand } from './commands/trick';
 
 async function main() {
   const args = process.argv.slice(2);
   const command = args[0];
 
-  const devagotchi = new Devagotchi();
-
   try {
     switch (command) {
+      case 'show':
+      case undefined:
+        await showCommand();
+        break;
+
       case 'feed':
-        await devagotchi.feed();
+        await feedCommand();
         break;
 
       case 'stats':
-        devagotchi.stats();
+        await statsCommand();
         break;
 
       case 'pet':
-        devagotchi.pet();
+        await petCommand();
         break;
 
       case 'name':
-        if (!args[1]) {
-          console.error('Please provide a name: devagotchi name <name>');
-          process.exit(1);
-        }
-        devagotchi.rename(args[1]);
+        await nameCommand(args[1]);
         break;
 
-      case 'skill':
-        if (!args[1]) {
-          console.error('Please provide a skill: devagotchi skill <fortune|trick>');
-          process.exit(1);
-        }
-        devagotchi.skill(args[1]);
+      case 'fortune':
+        await fortuneCommand();
         break;
 
-      case undefined:
-        await devagotchi.show();
+      case 'trick':
+        await trickCommand();
         break;
 
       default:
@@ -50,7 +51,8 @@ async function main() {
         console.log('  devagotchi stats    - Show detailed stats');
         console.log('  devagotchi pet      - Pet your companion');
         console.log('  devagotchi name <n> - Rename your pet');
-        console.log('  devagotchi skill <s> - Run a skill (fortune, trick)');
+        console.log('  devagotchi fortune  - Get a coding fortune');
+        console.log('  devagotchi trick    - Watch your pet do a trick');
         process.exit(1);
     }
   } catch (error) {

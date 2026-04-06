@@ -27,6 +27,7 @@ export class PetEngine {
       hunger: 100,
       lastUpdated: now,
       bornAt: now,
+      installedAt: now,
       lastSyncedTokenTimestamp: 0,
     };
   }

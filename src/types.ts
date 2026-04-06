@@ -14,6 +14,7 @@ export interface PetState {
   hunger: number; // 0-100
   lastUpdated: number; // timestamp
   bornAt: number; // timestamp
+  installedAt: number; // timestamp when devagotchi was first installed
   lastSyncedTokenTimestamp: number; // for adapter tracking
 }
 

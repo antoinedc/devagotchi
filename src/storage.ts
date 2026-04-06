@@ -22,7 +22,17 @@ export class Storage {
 
     try {
       const data = fs.readFileSync(STATE_FILE, 'utf-8');
-      return JSON.parse(data) as PetState;
+      const state = JSON.parse(data) as PetState;
+
+      // Migration: Add installedAt if it doesn't exist (for existing users)
+      // Use current time as installedAt to avoid retroactive XP
+      if (!state.installedAt) {
+        state.installedAt = Date.now();
+        state.lastSyncedTokenTimestamp = Date.now(); // Also reset sync timestamp
+        this.saveState(state);
+      }
+
+      return state;
     } catch (error) {
       console.error('Error loading state:', error);
       return null;

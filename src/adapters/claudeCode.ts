@@ -6,9 +6,12 @@ import { AdapterResult, TokenUsage } from '../types';
 const CLAUDE_DIR = path.join(os.homedir(), '.claude', 'projects');
 
 export class ClaudeCodeAdapter {
-  static async getTokensSinceTimestamp(lastTimestamp: number): Promise<AdapterResult> {
+  static async getTokensSinceTimestamp(lastTimestamp: number, installedAt: number): Promise<AdapterResult> {
     let totalTokens = 0;
     let maxTimestamp = lastTimestamp;
+
+    // Use installedAt as the absolute minimum timestamp - never count tokens before installation
+    const minimumTimestamp = Math.max(lastTimestamp, installedAt);
 
     try {
       if (!fs.existsSync(CLAUDE_DIR)) {
@@ -26,7 +29,7 @@ export class ClaudeCodeAdapter {
 
         for (const file of files) {
           const filePath = path.join(projectDir, file);
-          const result = this.parseJsonlFile(filePath, lastTimestamp);
+          const result = this.parseJsonlFile(filePath, minimumTimestamp);
           totalTokens += result.tokens;
           maxTimestamp = Math.max(maxTimestamp, result.lastTimestamp);
         }

@@ -1,8 +1,8 @@
 # Devagotchi 🐾
 
-> A terminal-resident virtual pet fed by AI coding tool token consumption
+> A Claude Code skill — your virtual pet that feeds on AI coding sessions
 
-Devagotchi is your "Living Developer Companion" — a virtual pet that lives in your terminal and evolves based on how much you use AI coding tools like Claude Code. The more tokens you consume while coding, the more your pet grows!
+Devagotchi is your "Living Developer Companion" — a virtual pet that lives inside Claude Code and evolves based on your coding sessions. The more tokens you consume while coding with Claude, the more your pet grows!
 
 ## Features
 
@@ -17,59 +17,61 @@ Devagotchi is your "Living Developer Companion" — a virtual pet that lives in 
 
 ## Installation
 
-### Quick Start (npx)
+### As a Claude Code Skill (Recommended)
+
+1. Clone this repository to your Claude Code skills directory:
 
 ```bash
-npx devagotchi
+git clone https://github.com/antoinedc/devagotchi.git ~/.claude/skills/devagotchi
 ```
 
-That's it. Your pet hatches on first run.
-
-### Global Install
+2. Install dependencies and build:
 
 ```bash
-npm install -g devagotchi
-```
-
-Then just run `devagotchi` anywhere.
-
-### From Source
-
-```bash
-git clone https://github.com/antoinedc/devagotchi.git
-cd devagotchi
+cd ~/.claude/skills/devagotchi
 npm install
 npm run build
-npm link
 ```
+
+3. Restart Claude Code or reload skills
+
+4. Run `/devagotchi` in Claude Code to initialize your pet!
 
 ### Requirements
 
 - Node.js 18+
-- **Claude Code** installed (for the token adapter) — [get it here](https://docs.anthropic.com/en/docs/claude-code)
+- **Claude Code** installed — [get it here](https://docs.anthropic.com/en/docs/claude-code)
 
 ## Usage
 
 ### Show Your Pet
 
-```bash
-devagotchi
+```
+/devagotchi
+```
+
+or
+
+```
+/devagotchi:show
 ```
 
 Displays your pet with current stats, hunger bar, and XP progress.
 
 ### Feed Your Pet
 
-```bash
-devagotchi feed
+```
+/devagotchi:feed
 ```
 
-Syncs with Claude Code to count tokens from your coding sessions and feeds your pet. Your pet gains XP (cumulative) and food based on token consumption.
+Syncs with Claude Code to count tokens from your coding sessions since installation and feeds your pet. Your pet gains XP (cumulative) and food based on token consumption.
+
+**Important**: Only tokens from sessions that happen AFTER you install Devagotchi are counted. No retroactive XP!
 
 ### View Detailed Stats
 
-```bash
-devagotchi stats
+```
+/devagotchi:stats
 ```
 
 Shows comprehensive information about your pet including:
@@ -81,29 +83,35 @@ Shows comprehensive information about your pet including:
 
 ### Pet Your Companion
 
-```bash
-devagotchi pet
+```
+/devagotchi:pet
 ```
 
 Show some love to your pet with a heart animation!
 
 ### Rename Your Pet
 
-```bash
-devagotchi name <name>
+```
+/devagotchi:name <name>
 ```
 
-Give your pet a custom name.
+Give your pet a custom name. Example: `/devagotchi:name Sparkles`
 
-### Run Skills
+### Get a Fortune
 
-```bash
-devagotchi skill fortune
-devagotchi skill trick
+```
+/devagotchi:fortune
 ```
 
-- `fortune`: Get a random fortune about your coding day
-- `trick`: Watch your pet perform a fun trick
+Get a random fortune about your coding day from your pet!
+
+### Watch a Trick
+
+```
+/devagotchi:trick
+```
+
+Watch your pet perform a fun ASCII art trick!
 
 ## Evolution Stages
 
@@ -139,9 +147,13 @@ When your pet first hatches, it randomly becomes one of three species:
 
 Each species has unique ASCII art for all evolution stages!
 
-## Claude Code Adapter
+## How It Works
 
-The Claude Code adapter automatically tracks your token usage by reading JSONL session files from `~/.claude/projects/*/sessions/*/`. It counts both input and output tokens and ensures no double counting by tracking the last sync timestamp.
+The Claude Code adapter automatically tracks your token usage by reading JSONL session files from `~/.claude/projects/`. It counts input, output, cache creation, and cache read tokens from all your coding sessions.
+
+**No Retroactive XP**: When you first install Devagotchi, it records the installation timestamp. Only tokens from sessions that happen AFTER this timestamp are counted. This ensures fair gameplay and gives everyone a fresh start!
+
+The adapter tracks the last sync timestamp to avoid double counting, so you can safely run `/devagotchi:feed` multiple times.
 
 ## Privacy
 
@@ -167,7 +179,24 @@ npm test
 
 ```
 devagotchi/
+├── SKILL.md                 # Claude Code skill definition
+├── scripts/                 # Shell scripts for each command
+│   ├── show.sh
+│   ├── feed.sh
+│   ├── stats.sh
+│   ├── pet.sh
+│   ├── name.sh
+│   ├── fortune.sh
+│   └── trick.sh
 ├── src/
+│   ├── commands/            # Command handlers
+│   │   ├── show.ts
+│   │   ├── feed.ts
+│   │   ├── stats.ts
+│   │   ├── pet.ts
+│   │   ├── name.ts
+│   │   ├── fortune.ts
+│   │   └── trick.ts
 │   ├── adapters/
 │   │   └── claudeCode.ts    # Claude Code token adapter
 │   ├── types.ts             # TypeScript type definitions
@@ -178,6 +207,7 @@ devagotchi/
 │   ├── skills.ts            # Pet skills (fortune, trick)
 │   ├── index.ts             # Main Devagotchi class
 │   └── cli.ts               # CLI entry point
+├── dist/                    # Compiled JavaScript
 ├── package.json
 ├── tsconfig.json
 └── tsup.config.ts
