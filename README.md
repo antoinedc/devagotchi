@@ -17,22 +17,36 @@ Devagotchi is your "Living Developer Companion" — a virtual pet that lives in 
 
 ## Installation
 
-```bash
-npm install
-npm run build
-```
-
-To use globally:
-
-```bash
-npm link
-```
-
-Or run directly:
+### Quick Start (npx)
 
 ```bash
 npx devagotchi
 ```
+
+That's it. Your pet hatches on first run.
+
+### Global Install
+
+```bash
+npm install -g devagotchi
+```
+
+Then just run `devagotchi` anywhere.
+
+### From Source
+
+```bash
+git clone https://github.com/antoinedc/devagotchi.git
+cd devagotchi
+npm install
+npm run build
+npm link
+```
+
+### Requirements
+
+- Node.js 18+
+- **Claude Code** installed (for the token adapter) — [get it here](https://docs.anthropic.com/en/docs/claude-code)
 
 ## Usage
 
@@ -176,6 +190,19 @@ MIT
 ## Contributing
 
 Contributions welcome! Feel free to open issues or submit PRs.
+
+---
+
+## Roadmap
+
+- [ ] Codex CLI adapter
+- [ ] Aider adapter
+- [ ] Web dashboard with pet animation
+- [ ] Desktop widget (macOS menu bar / Windows tray)
+- [ ] More species and evolution branches
+- [ ] Custom user skills (`~/.devagotchi/skills/`)
+- [ ] Opt-in social: compare pets, leaderboards
+- [ ] Starship prompt module
 
 ---
 
