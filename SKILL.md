@@ -1,73 +1,43 @@
 ---
 name: devagotchi
-description: Your living developer companion — a virtual pet that feeds on your AI coding sessions. Run /devagotchi to see your pet.
+description: Your living developer companion — a virtual pet that feeds on your AI coding sessions. Use /devagotchi to interact with your pet.
 ---
 
 # Devagotchi - Your AI Coding Companion
 
-Devagotchi is a virtual pet that lives in Claude Code and grows stronger as you code. Your pet feeds on the tokens consumed during your AI coding sessions, evolving through different stages as you work together.
+Devagotchi is a virtual pet that lives in Claude Code. It feeds on the tokens consumed during your coding sessions and evolves as you work.
 
-## How It Works
+## Commands
 
-- **Automatic Growth**: Your pet gains XP from tokens used in Claude Code sessions (since installation)
-- **Evolution Stages**: Watch your pet grow from egg → baby → teen → adult → elder → mythic
-- **Hunger System**: Keep your pet fed by coding regularly with Claude Code
-- **Interactive Commands**: Pet, rename, and interact with your companion
+All commands are run via `/devagotchi <command>`. When the user types `/devagotchi` with a subcommand, run the corresponding shell script.
 
-## Available Commands
+| User types | Run this |
+|---|---|
+| `/devagotchi` | `bash scripts/show.sh` |
+| `/devagotchi show` | `bash scripts/show.sh` |
+| `/devagotchi feed` | `bash scripts/feed.sh` |
+| `/devagotchi stats` | `bash scripts/stats.sh` |
+| `/devagotchi pet` | `bash scripts/pet.sh` |
+| `/devagotchi name Sparkles` | `bash scripts/name.sh Sparkles` |
+| `/devagotchi fortune` | `bash scripts/fortune.sh` |
+| `/devagotchi trick` | `bash scripts/trick.sh` |
+| `/devagotchi reset` | `bash scripts/reset.sh` |
 
-### `/devagotchi` or `/devagotchi:show`
-Show your current pet with its ASCII art, stats, and mood.
+**Always display the raw terminal output from the script to the user.** Do not summarize or reformat it — the ASCII art must be shown exactly as printed.
 
-### `/devagotchi:feed`
-Sync with Claude Code and feed your pet all the tokens earned since last feed. Watch for evolution!
+## What each command does
 
-### `/devagotchi:stats`
-Display detailed statistics including XP, hunger level, age, and evolution progress.
+- **show** — Display pet ASCII art with stats, hunger bar, XP progress
+- **feed** — Sync tokens from Claude Code sessions (since install) and feed pet
+- **stats** — Detailed stats: XP, hunger, mood, evolution progress, age
+- **pet** — Show love to your companion (heart animation)
+- **name <name>** — Rename your pet
+- **fortune** — Get a coding fortune
+- **trick** — Pet performs an ASCII trick
+- **reset** — Start over with a new pet (deletes all progress)
 
-### `/devagotchi:pet`
-Give your companion some love and attention. They'll appreciate it!
+## Notes
 
-### `/devagotchi:name <name>`
-Rename your pet. Example: `/devagotchi:name Sparkles`
-
-### `/devagotchi:fortune`
-Get a coding fortune from your pet to inspire your next session.
-
-### `/devagotchi:trick`
-Watch your pet perform a fun ASCII art trick!
-
-## Installation
-
-1. Clone this repository to your Claude Code skills directory:
-```bash
-git clone https://github.com/antoinedc/devagotchi.git ~/.claude/skills/devagotchi
-```
-
-2. Install dependencies and build:
-```bash
-cd ~/.claude/skills/devagotchi
-npm install
-npm run build
-```
-
-3. Restart Claude Code or reload skills
-
-4. Run `/devagotchi` to initialize your pet!
-
-## Important Notes
-
-- **No Retroactive XP**: Your pet only counts tokens from Claude Code sessions that happen AFTER you install Devagotchi. This ensures fair gameplay and gives you a fresh start.
-- **Keep Coding**: Your pet gets hungry over time. Regular coding sessions keep them happy and healthy!
-- **Evolution**: Different species (cat, dragon, robot) can emerge based on your pet's journey.
-
-## Tips
-
-- Run `/devagotchi:feed` after each coding session to keep your pet well-fed
-- Check `/devagotchi:stats` to see how close you are to the next evolution
-- Use `/devagotchi:fortune` when you need inspiration for your next feature
-- Remember to `/devagotchi:pet` your companion occasionally — they appreciate the attention!
-
----
-
-Enjoy your journey with your new coding companion!
+- Pet only counts tokens from sessions AFTER installation (no retroactive XP)
+- Hunger depletes over time — feed regularly by coding with Claude Code
+- Pet evolves: Egg → Baby → Teen → Adult → Elder → Mythic

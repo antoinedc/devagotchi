@@ -7,6 +7,7 @@ import { petCommand } from './commands/pet';
 import { nameCommand } from './commands/name';
 import { fortuneCommand } from './commands/fortune';
 import { trickCommand } from './commands/trick';
+import { resetCommand } from './commands/reset';
 
 async function main() {
   const args = process.argv.slice(2);
@@ -43,6 +44,10 @@ async function main() {
         await trickCommand();
         break;
 
+      case 'reset':
+        await resetCommand();
+        break;
+
       default:
         console.log('Devagotchi - Your AI-powered terminal pet 🐾\n');
         console.log('Commands:');
@@ -53,6 +58,7 @@ async function main() {
         console.log('  devagotchi name <n> - Rename your pet');
         console.log('  devagotchi fortune  - Get a coding fortune');
         console.log('  devagotchi trick    - Watch your pet do a trick');
+        console.log('  devagotchi reset    - Start over with a new pet');
         process.exit(1);
     }
   } catch (error) {
