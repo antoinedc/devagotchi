@@ -17,21 +17,6 @@ const CLI = path.join(__dirname, '..', 'dist', 'cli.js');
 const THROTTLE_MS = 5 * 60 * 1000;
 const CLAUDE_DIR = path.join(os.homedir(), '.claude', 'projects');
 
-// ─── Level calculation (must match dashboard.html) ───
-const LEVEL_BASE = 300000;
-const LEVEL_LOG = Math.log(1.6);
-function getLevel(xp) {
-  if (xp < LEVEL_BASE * 0.6) return 0;
-  return Math.floor(Math.log(xp / LEVEL_BASE + 1) / LEVEL_LOG);
-}
-function getNextLevelXp(level) {
-  return Math.floor(LEVEL_BASE * (Math.pow(1.6, level + 1) - 1));
-}
-function getCurrentLevelXp(level) {
-  if (level === 0) return 0;
-  return Math.floor(LEVEL_BASE * (Math.pow(1.6, level) - 1));
-}
-
 // Read JSON from stdin
 let input = '';
 const stdinTimeout = setTimeout(() => process.exit(0), 3000);
@@ -75,16 +60,7 @@ process.stdin.on('end', () => {
     else if (currentHunger > 20) coloredBar = `\x1b[38;5;208m${bar}\x1b[0m`;
     else coloredBar = `\x1b[31m${bar}\x1b[0m`;
 
-    // ─── [3] Next level progress ───
-    const level = getLevel(xp);
-    const curLvlXp = getCurrentLevelXp(level);
-    const nextLvlXp = getNextLevelXp(level);
-    const lvlPct = Math.min(100, Math.round(((xp - curLvlXp) / (nextLvlXp - curLvlXp)) * 100));
-    const lvlFilled = Math.round(lvlPct / 25);
-    const lvlBar = '▓'.repeat(lvlFilled) + '░'.repeat(4 - lvlFilled);
-    const lvlStr = `\x1b[35mlv${level} ${lvlBar} ${lvlPct}%\x1b[0m`;
-
-    // ─── [6] Time-based quip ───
+    // ─── Time-based behavior ───
     const quip = getTimeQuip(state);
 
     // ─── Level up notification ───
@@ -122,7 +98,7 @@ process.stdin.on('end', () => {
     const quipStr = quip ? ` \x1b[2;3m${quip}\x1b[0m` : '';
 
     process.stdout.write(
-      `${speciesEmoji} ${name} ${moodEmoji} ${coloredBar} ${lvlStr}${streakStr}${quipStr}${levelUpMsg}${fedMsg}`
+      `${speciesEmoji} ${name} ${moodEmoji} ${coloredBar}${streakStr}${quipStr}${levelUpMsg}${fedMsg}`
     );
 
     // Record today for streak tracking
@@ -205,46 +181,64 @@ function getMoodAnimation(hunger, state) {
   }
 }
 
-// ─── [6] Time-based quips ───
+// ─── Time-based behavior ───
+// Pet reacts to the time of day, adjusted by personality chronotype.
+// Rotates between a few quips per time block every 30s so it feels alive.
 function getTimeQuip(state) {
   const hour = new Date().getHours();
   const personality = state.personality;
   const chronotype = personality?.chronotype || 'day-walker';
+  const tick = Math.floor(Date.now() / 30000) % 3; // Rotates every 30s
 
-  // Only show quip ~25% of the time (changes every 40s)
-  const slot = Math.floor(Date.now() / 40000) % 4;
-  if (slot !== 0) return '';
-
-  // Time-vs-chronotype quips
-  if (hour >= 0 && hour < 5) {
-    if (chronotype === 'night-owl') return '"peak hours 🌙"';
-    return '"still up? 💤"';
-  }
-  if (hour >= 5 && hour < 8) {
-    if (chronotype === 'early-bird') return '"let\'s go! ☀️"';
-    return '"*yawn* ☕"';
-  }
-  if (hour >= 8 && hour < 12) {
-    return ['', '"morning! ☀️"', '', '"let\'s build 🛠️"'][Math.floor(Date.now() / 60000) % 4];
-  }
-  if (hour >= 12 && hour < 14) {
-    return '"lunch break? 🍕"';
-  }
-  if (hour >= 17 && hour < 19) {
-    return '"wrapping up? 📦"';
-  }
-  if (hour >= 22) {
-    if (chronotype === 'night-owl') return '"the night is young 🦇"';
-    return '"bedtime? 🌙"';
-  }
-
-  // Session length quips
+  // Session duration awareness
   const sessionStart = state.lastUpdated || Date.now();
   const sessionHours = (Date.now() - sessionStart) / (1000 * 60 * 60);
-  if (sessionHours > 3) return '"marathon mode! 💪"';
-  if (sessionHours > 1.5) return '"deep work 🧠"';
 
-  return '';
+  // Session-length quips take priority
+  if (sessionHours > 4) return ['"we\'ve been at this all day!"', '"take a break?"', '"marathon mode 💪"'][tick];
+  if (sessionHours > 2) return ['"deep work mode 🧠"', '"in the zone"', '"focused 🎯"'][tick];
+
+  // Late night (midnight–5am)
+  if (hour >= 0 && hour < 5) {
+    if (chronotype === 'night-owl') return ['"peak hours 🌙"', '"the night is ours"', '"let\'s ship it 🚀"'][tick];
+    return ['"still up? 💤"', '"zzz..."', '"sleep soon?"'][tick];
+  }
+
+  // Early morning (5–8am)
+  if (hour >= 5 && hour < 8) {
+    if (chronotype === 'early-bird') return ['"let\'s go! ☀️"', '"early start!"', '"fresh code ✨"'][tick];
+    return ['"*yawn* ☕"', '"too early..."', '"need coffee"'][tick];
+  }
+
+  // Morning (8am–noon)
+  if (hour >= 8 && hour < 12) {
+    return ['"good morning ☀️"', '"let\'s build 🛠️"', '"ready to code"'][tick];
+  }
+
+  // Lunch (noon–2pm)
+  if (hour >= 12 && hour < 14) {
+    return ['"lunch break? 🍕"', '"hungry..."', '"food first?"'][tick];
+  }
+
+  // Afternoon (2–5pm)
+  if (hour >= 14 && hour < 17) {
+    return ['"afternoon grind"', '"shipping mode 📦"', '"heads down"'][tick];
+  }
+
+  // Evening (5–8pm)
+  if (hour >= 17 && hour < 20) {
+    return ['"evening session"', '"wrapping up?"', '"one more thing..."'][tick];
+  }
+
+  // Night (8–10pm)
+  if (hour >= 20 && hour < 22) {
+    if (chronotype === 'night-owl') return ['"warming up 🌙"', '"prime time"', '"let\'s go"'][tick];
+    return ['"winding down"', '"last push?"', '"almost done?"'][tick];
+  }
+
+  // Late evening (10pm–midnight)
+  if (chronotype === 'night-owl') return ['"the night is young 🦇"', '"peak hours 🌙"', '"unstoppable"'][tick];
+  return ['"bedtime? 🌙"', '"late one tonight"', '"burning midnight oil"'][tick];
 }
 
 // ─── Background auto-feed ───
