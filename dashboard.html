@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Devagotchi</title>
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700&display=swap');
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -14,7 +14,7 @@
     --card: #12122a;
     --border: #2a2a4a;
     --text: #e0e0f0;
-    --dim: #6a6a8a;
+    --dim: #8a8aaa;
     --green: #4ade80;
     --yellow: #fbbf24;
     --orange: #fb923c;
@@ -26,7 +26,7 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Press Start 2P', monospace;
+    font-family: 'Inter', -apple-system, sans-serif;
     min-height: 100vh;
     display: flex;
     align-items: center;
@@ -35,15 +35,15 @@
   }
 
   .container {
-    max-width: 480px;
+    max-width: 520px;
     width: 100%;
   }
 
   .pet-card {
     background: var(--card);
     border: 2px solid var(--border);
-    border-radius: 12px;
-    padding: 2rem;
+    border-radius: 16px;
+    padding: 2.5rem;
     text-align: center;
   }
 
@@ -64,17 +64,19 @@
   }
 
   .pet-name {
-    font-size: 14px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 20px;
     color: var(--cyan);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.4rem;
   }
 
   .pet-species {
-    font-size: 9px;
+    font-size: 13px;
+    font-weight: 500;
     color: var(--dim);
     margin-bottom: 1.5rem;
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
   }
 
   .stat-row {
@@ -82,42 +84,48 @@
     align-items: center;
     justify-content: space-between;
     margin-bottom: 0.75rem;
-    font-size: 8px;
+    font-size: 13px;
+    font-weight: 500;
   }
 
   .stat-label {
     color: var(--dim);
-    width: 70px;
+    width: 80px;
     text-align: left;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
   }
 
   .stat-bar-bg {
     flex: 1;
-    height: 12px;
+    height: 14px;
     background: #1a1a3a;
-    border-radius: 2px;
-    margin: 0 8px;
+    border-radius: 3px;
+    margin: 0 12px;
     overflow: hidden;
     border: 1px solid var(--border);
   }
 
   .stat-bar-fill {
     height: 100%;
-    border-radius: 1px;
+    border-radius: 2px;
     transition: width 0.5s ease;
   }
 
   .stat-value {
-    width: 60px;
+    width: 70px;
     text-align: right;
-    font-size: 7px;
+    font-size: 13px;
+    font-weight: 600;
   }
 
   .mood-badge {
     display: inline-block;
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-size: 8px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
     margin-top: 1rem;
     border: 1px solid;
   }
@@ -129,9 +137,10 @@
 
   .stage-badge {
     display: inline-block;
-    padding: 4px 12px;
-    border-radius: 4px;
-    font-size: 8px;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
     margin-top: 0.5rem;
     background: #1a1a3a;
     border: 1px solid var(--purple);
@@ -139,52 +148,53 @@
   }
 
   .age {
-    font-size: 7px;
+    font-size: 12px;
     color: var(--dim);
     margin-top: 1rem;
   }
 
   .personality {
     margin-top: 1.5rem;
-    padding-top: 1rem;
+    padding-top: 1.25rem;
     border-top: 1px solid var(--border);
     text-align: left;
   }
 
   .personality h3 {
-    font-size: 9px;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 10px;
     color: var(--cyan);
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
     text-align: center;
   }
 
   .trait-row {
     display: flex;
     justify-content: space-between;
-    font-size: 7px;
-    margin-bottom: 0.4rem;
+    font-size: 13px;
+    margin-bottom: 0.5rem;
   }
 
-  .trait-label { color: var(--dim); }
-  .trait-value { color: var(--text); }
+  .trait-label { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
+  .trait-value { color: var(--text); font-weight: 600; }
 
   .blurb {
-    font-size: 7px;
+    font-size: 13px;
     color: var(--yellow);
     font-style: italic;
     text-align: center;
-    margin-top: 0.75rem;
+    margin-top: 1rem;
     line-height: 1.6;
   }
 
   .no-pet {
-    font-size: 10px;
+    font-size: 15px;
     color: var(--dim);
     padding: 3rem 1rem;
   }
 
   .instructions {
-    font-size: 7px;
+    font-size: 12px;
     color: var(--dim);
     margin-top: 1.5rem;
     line-height: 1.8;
